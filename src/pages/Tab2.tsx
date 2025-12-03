@@ -1,5 +1,5 @@
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
-import ExploreContainer from '../components/ExploreContainer';
+import { IonInput,IonTextarea  } from '@ionic/react';
 import './Tab2.css';
 
 const Tab2: React.FC = () => {
@@ -7,7 +7,7 @@ const Tab2: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Tab 2</IonTitle>
+          <IonTitle>Formulario del Repositorio</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
@@ -16,7 +16,26 @@ const Tab2: React.FC = () => {
             <IonTitle size="large">Tab 2</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <ExploreContainer name="Tab 2 page" />
+        <div>
+           <IonInput 
+           label="Nombre del Repositorio" 
+           labelPlacement="floating" 
+           fill="outline" 
+           placeholder="andorid-proyect"
+            className='form-field'
+            >
+           </IonInput>
+          <IonTextarea 
+          label="Descripcion del Repositrio"
+           labelPlacement="floating"
+            fill="outline" 
+            placeholder="Este es un Repositorio de prueba para el proyecto movil"
+            className='form-field'
+            rows={6}>
+            
+            </IonTextarea>
+            
+        </div>
       </IonContent>
     </IonPage>
   );
