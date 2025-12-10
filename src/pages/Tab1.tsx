@@ -1,54 +1,53 @@
-import { IonContent, IonHeader, IonList, IonPage, IonTitle, IonToolbar } from '@ionic/react';
-import {  IonCard,  IonCardContent,  IonCardHeader,  IonCardSubtitle,  IonCardTitle,  IonItem,  IonLabel,  IonThumbnail,} from '@ionic/react';
+import {
+  IonContent,
+  IonHeader,
+  IonList,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+  IonCardSubtitle,
+  useIonViewDidEnter
+} from '@ionic/react';
 
+import { useState } from 'react';
 import './Tab1.css';
 
+import { RepositoryItem } from '../interfaces/RepositoryItem';
+import { fetchRepositories } from '../services/GithubServices';
+
+import RepoItem from '../components/RepoItem';
+
 const Tab1: React.FC = () => {
+  const [repos, setRepos] = useState<RepositoryItem[]>([]);
+
+  const loadRepos = async () => {
+    const repoData = await fetchRepositories();
+    setRepos(repoData);
+  };
+
+  useIonViewDidEnter(() => {
+    console.log("IonViewDidEnter - Cargando Repositorios");
+    loadRepos();
+  });
+
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
           <IonTitle>Repositorios</IonTitle>
-          
         </IonToolbar>
-        <IonCardSubtitle>.        Estos son los Repositorios:</IonCardSubtitle>
+        <IonCardSubtitle>Estos son los Repositorios:</IonCardSubtitle>
       </IonHeader>
-      <IonContent fullscreen>
-        <IonHeader collapse="condense">
-          <IonToolbar>
-            <IonTitle size="large">Tab 1</IonTitle>
-          </IonToolbar>
-        </IonHeader>
+
+      <IonContent>
         <IonList>
-           <IonItem>
-            <IonThumbnail slot="start">
-              <img alt="Silhouette of mountains" src="https://1000marcas.net/wp-content/uploads/2020/01/Android-Logo-2014-1.png" />
-            </IonThumbnail>
-            <IonLabel>Repo1</IonLabel>
-          </IonItem>
-
-          <IonItem>
-            <IonThumbnail slot="start">
-              <img alt="Silhouette of mountains" src="https://1000marcas.net/wp-content/uploads/2020/01/Android-Logo-2014-1.png" />
-            </IonThumbnail>
-            <IonLabel>Repo2</IonLabel>
-          </IonItem>
-
-          <IonItem>
-            <IonThumbnail slot="start">
-              <img alt="Silhouette of mountains" src="https://1000marcas.net/wp-content/uploads/2020/01/Android-Logo-2014-1.png" />
-            </IonThumbnail>
-            <IonLabel>Repo3</IonLabel>
-          </IonItem>
-
-          <IonItem lines="none">
-            <IonThumbnail slot="start">
-              <img alt="Silhouette of mountains" src="https://1000marcas.net/wp-content/uploads/2020/01/Android-Logo-2014-1.png" />
-            </IonThumbnail>
-            <IonLabel>Repo4</IonLabel>
-          </IonItem>
+          {repos.map((repo, index) => (
+            <RepoItem
+              key={index}
+              repo={repo }
+            />
+          ))}
         </IonList>
-        
       </IonContent>
     </IonPage>
   );
