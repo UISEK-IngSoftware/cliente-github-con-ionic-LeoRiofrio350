@@ -1,9 +1,23 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, useIonViewDidEnter } from '@ionic/react';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle } from '@ionic/react';
 import './Tab3.css';
+import { useState } from 'react';
+import { UserInfo } from '../interfaces/UserInfo';
+import { getUserInfo } from '../services/GithubServices';
 
 
 const Tab3: React.FC = () => {
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+
+  const loadUserInfo = async () => {
+    const info = await getUserInfo();
+    setUserInfo(info);  
+  };
+
+  useIonViewDidEnter(() => {
+    loadUserInfo();
+  });
+
   return (
     <IonPage>
       <IonHeader>
@@ -18,13 +32,14 @@ const Tab3: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         <IonCard>
-      <img alt="Silhouette of mountains" src="https://cdn.conmebol.com/wp-content/uploads/2023/06/000_334P84K-scaled.jpg" />
+      <img alt={userInfo?.name}
+       src={userInfo?.avatar_url} />
       <IonCardHeader>
-        <IonCardTitle>Leo Riofrio</IonCardTitle>
-        <IonCardSubtitle>LeoRiofrio350</IonCardSubtitle>
+        <IonCardTitle>{userInfo?.name}</IonCardTitle>
+        <IonCardSubtitle>{userInfo?.login}</IonCardSubtitle>
       </IonCardHeader>
 
-      <IonCardContent>Soy un desarrollador de software apasionado a las tegnologias</IonCardContent>
+      <IonCardContent>{userInfo?.bio}</IonCardContent>
     </IonCard>
       </IonContent>
     </IonPage>
