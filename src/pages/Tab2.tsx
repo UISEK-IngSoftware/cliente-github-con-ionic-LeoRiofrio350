@@ -1,80 +1,161 @@
-  import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
-  import { IonInput,IonTextarea  } from '@ionic/react';
-  import './Tab2.css';
-  import { useHistory } from 'react-router';
-  import { RepositoryItem } from '../interfaces/RepositoryItem';
-  import { createdRepository } from '../services/GithubServices';
+import { 
+  IonButton, 
+  IonContent, 
+  IonHeader, 
+  IonPage, 
+  IonTitle, 
+  IonToolbar,
+  IonInput, 
+  IonTextarea,
+  IonSpinner,
+  useIonToast,
+  IonText
+} from '@ionic/react';
+import './Tab2.css';
+import { useHistory } from 'react-router';
+import { useState } from 'react';
+import { RepositoryItem } from '../interfaces/RepositoryItem';
+import { createRepository } from '../services/GithubServices';
 
-  const Tab2: React.FC = () => {
+const Tab2: React.FC = () => {
+  const history = useHistory();
+  const [presentToast] = useIonToast();
 
-    const history = useHistory();
+  const [repoName, setRepoName] = useState('');
+  const [repoDescription, setRepoDescription] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({
+    name: '',
+    general: ''
+  });
 
-    const repoFormData : RepositoryItem = {
-      name: '',
-      description: '',
+  const validateForm = (): boolean => {
+    const newErrors = { name: '', general: '' };
+    let isValid = true;
+
+    if (repoName.trim() === '') {
+      newErrors.name = 'El nombre del repositorio es obligatorio';
+      isValid = false;
+    } else if (repoName.length < 3) {
+      newErrors.name = 'El nombre debe tener al menos 3 caracteres';
+      isValid = false;
+    } else if (!/^[a-zA-Z0-9_.-]+$/.test(repoName)) {
+      newErrors.name = 'El nombre solo puede contener letras, números, guiones y puntos';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const saveRepository = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    const repoFormData: RepositoryItem = {
+      name: repoName.trim(),
+      description: repoDescription.trim() || null,
       imageUrl: null,
       owner: null,
       language: null,
     };
-    const setRepoName = (value: string) => {
-      repoFormData.name = value;
-    };
 
-    const setRepoDescripcion = (value: string) => {
-      repoFormData.description = value;
-    };
+    try {
+      setLoading(true);
+      setErrors({ name: '', general: '' });
+      
+      await createRepository(repoFormData);
+      
+      presentToast({
+        message: 'Repositorio creado exitosamente',
+        duration: 2000,
+        color: 'success',
+        position: 'bottom'
+      });
 
-    const saveRepository = () => {
-
-      if(repoFormData.name.trim() === '') {
-        alert('El nombre del repositorio es obligatorio.');
-        return;
-      }
-      createdRepository(repoFormData)
-      .then(() => {history.push('/tab1');})
-      .catch(() => {
-        alert('Error al crear el repositorio. Inténtalo de nuevo.');
-          });
+      setRepoName('');
+      setRepoDescription('');
+      
+      history.push('/tab1');
+    } catch (error: any) {
+      setErrors({
+        ...errors,
+        general: error.message || 'Error al crear el repositorio. Inténtalo de nuevo.'
+      });
+      
+      presentToast({
+        message: error.message || 'Error al crear el repositorio',
+        duration: 3000,
+        color: 'danger',
+        position: 'bottom'
+      });
+    } finally {
+      setLoading(false);
     }
-
-    return (
-      <IonPage>
-        <IonHeader>
-          <IonToolbar>
-            <IonTitle>Formulario del Repositorio</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-
-        <IonContent fullscreen>
-          <div>
-            <IonInput
-              label="Nombre del Repositorio"
-              labelPlacement="floating"
-              fill="outline"
-              placeholder="android-project"
-              className="form-field"
-              value={repoFormData.name}
-              onIonChange={(e) => setRepoName(e.detail.value!)}
-            />
-
-            <IonTextarea
-              label="Descripción del Repositorio"
-              labelPlacement="floating"
-              fill="outline"
-              placeholder="Este es un repositorio de prueba para el proyecto móvil"
-              className="form-field"
-              rows={6}
-              value={repoFormData.description}
-              onIonChange={(e) => setRepoDescripcion(e.detail.value!)}
-            />
-
-            <IonButton expand="block" className="form-field"onClick={saveRepository}>
-              Guardar
-            </IonButton>
-          </div>
-        </IonContent>
-      </IonPage>
-    );
   };
 
-  export default Tab2;
+  return (
+    <IonPage>
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>Crear Repositorio</IonTitle>
+        </IonToolbar>
+      </IonHeader>
+
+      <IonContent fullscreen>
+        <div className="form-container">
+          <IonInput
+            label="Nombre del Repositorio *"
+            labelPlacement="floating"
+            fill="outline"
+            placeholder="mi-proyecto-awesome"
+            className={`form-field ${errors.name ? 'ion-invalid ion-touched' : ''}`}
+            value={repoName}
+            onIonChange={(e) => setRepoName(e.detail.value!)}
+            disabled={loading}
+            errorText={errors.name}
+          />
+
+          <IonTextarea
+            label="Descripción del Repositorio"
+            labelPlacement="floating"
+            fill="outline"
+            placeholder="Una breve descripción de tu proyecto..."
+            className="form-field"
+            rows={6}
+            value={repoDescription}
+            onIonChange={(e) => setRepoDescription(e.detail.value!)}
+            disabled={loading}
+          />
+
+          {errors.general && (
+            <IonText color="danger" className="error-message">
+              <p>{errors.general}</p>
+            </IonText>
+          )}
+
+          <IonButton 
+            expand="block" 
+            className="form-field"
+            onClick={saveRepository}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <IonSpinner name="crescent" className="button-spinner" />
+                Creando...
+              </>
+            ) : (
+              'Crear Repositorio'
+            )}
+          </IonButton>
+
+          
+        </div>
+      </IonContent>
+    </IonPage>
+  );
+};
+
+export default Tab2;
