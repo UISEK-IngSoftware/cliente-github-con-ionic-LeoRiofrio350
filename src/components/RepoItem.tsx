@@ -13,6 +13,8 @@ import { trash, pencil } from 'ionicons/icons';
 import './RepoItem.css';
 import { RepositoryItem } from '../interfaces/RepositoryItem';
 import { deleteRepository } from '../services/GithubServices';
+import { useState } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 
 interface RepoItemProps {
   repo: RepositoryItem;
@@ -21,6 +23,8 @@ interface RepoItemProps {
 }
 
 const RepoItem: React.FC<RepoItemProps> = ({ repo, onEdit, onDelete }) => {
+  const [loading, setLoading] = useState(false);
+  
   const [presentAlert] = useIonAlert();
   const [presentToast] = useIonToast();
 
@@ -38,6 +42,7 @@ const RepoItem: React.FC<RepoItemProps> = ({ repo, onEdit, onDelete }) => {
           role: 'destructive',
           handler: async () => {
             try {
+              setLoading(true);
               if (repo.owner) {
                 await deleteRepository(repo.owner, repo.name);
                 presentToast({
@@ -55,6 +60,8 @@ const RepoItem: React.FC<RepoItemProps> = ({ repo, onEdit, onDelete }) => {
                 color: 'danger',
                 position: 'bottom'
               });
+            } finally {
+              setLoading(false);
             }
           }
         }
@@ -77,7 +84,7 @@ const RepoItem: React.FC<RepoItemProps> = ({ repo, onEdit, onDelete }) => {
         </IonThumbnail>
         <IonLabel>
           <h2>{repo.name}</h2>
-          <p>{repo.description || 'Sin descripción'}</p>
+          <p>{repo.description !== null ? repo.description : 'Sin descripción'}</p>
           <p>Propietario: {repo.owner}</p>
           <p>Lenguaje: {repo.language || 'No especificado'}</p>
         </IonLabel>
@@ -87,13 +94,18 @@ const RepoItem: React.FC<RepoItemProps> = ({ repo, onEdit, onDelete }) => {
         <IonItemOption color="primary" onClick={handleEdit}>
           <IonIcon slot="icon-only" icon={pencil} />
         </IonItemOption>
+              
+
       </IonItemOptions>
 
       <IonItemOptions side="end">
         <IonItemOption color="danger" onClick={handleDelete}>
           <IonIcon slot="icon-only" icon={trash} />
         </IonItemOption>
+              
+
       </IonItemOptions>
+      <LoadingSpinner isOpen={loading} />
     </IonItemSliding>
   );
 };

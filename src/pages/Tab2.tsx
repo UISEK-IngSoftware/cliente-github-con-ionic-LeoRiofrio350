@@ -16,6 +16,7 @@ import { useHistory } from 'react-router';
 import { useState } from 'react';
 import { RepositoryItem } from '../interfaces/RepositoryItem';
 import { createRepository } from '../services/GithubServices';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Tab2: React.FC = () => {
   const history = useHistory();
@@ -78,17 +79,18 @@ const Tab2: React.FC = () => {
       setRepoDescription('');
       
       history.push('/tab1');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al crear el repositorio. Inténtalo de nuevo.';
       setErrors({
         ...errors,
-        general: error.message || 'Error al crear el repositorio. Inténtalo de nuevo.'
+        general: errorMessage,
       });
       
       presentToast({
-        message: error.message || 'Error al crear el repositorio',
+        message: errorMessage,
         duration: 3000,
         color: 'danger',
-        position: 'bottom'
+        position: 'bottom',
       });
     } finally {
       setLoading(false);
@@ -121,7 +123,7 @@ const Tab2: React.FC = () => {
             label="Descripción del Repositorio"
             labelPlacement="floating"
             fill="outline"
-            placeholder="Una breve descripción de tu proyecto..."
+            placeholder="Descripcion del proyecto..."
             className="form-field"
             rows={6}
             value={repoDescription}
@@ -135,8 +137,8 @@ const Tab2: React.FC = () => {
             </IonText>
           )}
 
-          <IonButton 
-            expand="block" 
+          <IonButton
+            expand="block"
             className="form-field"
             onClick={saveRepository}
             disabled={loading}
@@ -151,9 +153,10 @@ const Tab2: React.FC = () => {
             )}
           </IonButton>
 
-          
+
         </div>
       </IonContent>
+      <LoadingSpinner isOpen={loading} />
     </IonPage>
   );
 };

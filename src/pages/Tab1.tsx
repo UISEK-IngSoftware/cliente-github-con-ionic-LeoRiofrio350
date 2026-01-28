@@ -7,7 +7,6 @@ import {
   IonToolbar,
   IonCardSubtitle,
   useIonViewDidEnter,
-  IonSpinner,
   IonRefresher,
   IonRefresherContent,
   RefresherEventDetail,
@@ -17,7 +16,8 @@ import {
   IonInput,
   IonTextarea,
   IonButtons,
-  useIonToast
+  useIonToast,
+  IonSpinner
 } from '@ionic/react';
 
 import { useState, useRef } from 'react';
@@ -27,6 +27,7 @@ import { RepositoryItem } from '../interfaces/RepositoryItem';
 import { fetchRepositories, updateRepository } from '../services/GithubServices';
 
 import RepoItem from '../components/RepoItem';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Tab1: React.FC = () => {
   const [repos, setRepos] = useState<RepositoryItem[]>([]);
@@ -36,6 +37,7 @@ const Tab1: React.FC = () => {
   const [editingRepo, setEditingRepo] = useState<RepositoryItem | null>(null);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [savingLoading, setSavingLoading] = useState(false);
   const [presentToast] = useIonToast();
 
   const modal = useRef<HTMLIonModalElement>(null);
@@ -46,8 +48,9 @@ const Tab1: React.FC = () => {
       setError('');
       const repoData = await fetchRepositories();
       setRepos(repoData);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar los repositorios');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al cargar los repositorios';
+      setError(errorMessage);
       console.error('Error cargando repositorios:', err);
     } finally {
       setLoading(false);
@@ -74,29 +77,33 @@ const Tab1: React.FC = () => {
     if (!editingRepo || !editingRepo.owner) return;
 
     try {
+      setSavingLoading(true);
       const updatedData: Partial<RepositoryItem> = {
         name: editName,
         description: editDescription
       };
 
       await updateRepository(editingRepo.owner, editingRepo.name, updatedData);
-      
+
       presentToast({
         message: 'Repositorio actualizado correctamente',
         duration: 2000,
         color: 'success',
-        position: 'bottom'
+        position: 'bottom',
       });
 
       setIsEditModalOpen(false);
       loadRepos();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al actualizar el repositorio';
       presentToast({
-        message: error.message || 'Error al actualizar el repositorio',
+        message: errorMessage,
         duration: 3000,
         color: 'danger',
-        position: 'bottom'
+        position: 'bottom',
       });
+    } finally {
+      setSavingLoading(false);
     }
   };
 
@@ -121,15 +128,6 @@ const Tab1: React.FC = () => {
           <IonRefresherContent></IonRefresherContent>
         </IonRefresher>
 
-        {loading && (
-          <div className="loading-container">
-            <IonSpinner name="crescent" />
-            <IonText>
-              <p>Cargando repositorios...</p>
-            </IonText>
-          </div>
-        )}
-
         {error && !loading && (
           <div className="error-container ion-padding">
             <IonText color="danger">
@@ -153,9 +151,9 @@ const Tab1: React.FC = () => {
 
         {!loading && !error && repos.length > 0 && (
           <IonList>
-            {repos.map((repo, index) => (
+            {repos.map((repo) => (
               <RepoItem
-                key={index}
+                key={repo.id}
                 repo={repo}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
@@ -199,12 +197,20 @@ const Tab1: React.FC = () => {
               className="ion-margin-bottom"
             />
 
-            <IonButton expand="block" onClick={saveEdit}>
-              Guardar Cambios
+            <IonButton expand="block" onClick={saveEdit} disabled={savingLoading}>
+              {savingLoading ? (
+                <>
+                  <IonSpinner name="crescent" style={{ marginRight: '10px' }} />
+                  Guardando...
+                </>
+              ) : 'Guardar Cambios'}
             </IonButton>
           </IonContent>
+          
         </IonModal>
       </IonContent>
+      <LoadingSpinner isOpen={loading || savingLoading} />
+      
     </IonPage>
   );
 };
